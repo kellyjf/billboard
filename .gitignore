@@ -1,0 +1,5 @@
+*.sw?
+*.sqlite
+__pycache__
+*.tar.*
+ui_*.py
