@@ -1,4 +1,5 @@
 *.sw?
+*.txt
 *.sqlite
 __pycache__
 *.tar.*
