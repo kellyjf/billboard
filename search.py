@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from argparse import ArgumentParser as ap
-from schema import session, Song, Artist, Entry
+from schema import session, Song, Artist, Entry, Url
 from datetime import datetime
 import requests
 from lxml import html
@@ -25,25 +25,29 @@ if __name__ == "__main__":
 	else:
 		todate=datetime.strptime(f"{args.start+1}-01-01", "%Y-%m-%d")
 
-	entries=session.query(Entry).filter(Entry.date<todate).filter(Entry.date>=fromdate).all()
-	
-	songs=set([x.song for x in entries])
-	res=list()
-	for song in songs:
-		ents=sorted(song.entries, key=lambda x:x.rank)
-		peak=ents[0]
-		
+	if False:
+		entries=session.query(Entry).filter(Entry.date<todate).filter(Entry.date>=fromdate).all()
+		songs=set([x.song for x in entries])
+		res=list()
+		for song in songs:
+			ents=sorted(song.entries, key=lambda x:x.rank)
+			peak=ents[0]
+			
 		if peak.rank<=args.max_peak and peak.rank>=args.min_peak:
 			res.append(peak)
-
-	for result in sorted(res, key=lambda x: (x.date,x.rank))[:3]:
+		songs=[]
+		for result in sorted(res, key=lambda x: (x.date,x.rank)):
+			songs.append(song)
+	else:
+		songs=session.query(Song).filter(Song.date<todate).filter(Song.date>=fromdate).filter(Song.peak<=args.max_peak).filter(Song.peak>=args.min_peak).all()
 		
-		print(f"{result.date.strftime('%Y-%m-%d')} {result.rank: 3d} {result.song.artist.text:<35.35} {result.song.text}")
 
-		song=result.song
+
+	for song in songs:
 		artist=song.artist
+		print(f"{song.date.strftime('%Y-%m-%d')} {song.peak: 3d} {artist.text:<35.35} {song.text}")
 
-		url="https://www.youtube.com/results?search_query="+requests.utils.quote(f"{result.song.text} {result.song.artist.text}")
+		url="https://www.youtube.com/results?search_query="+requests.utils.quote(f"{song.text} {artist.text}")
 		
 		
 		if not os.path.exists("data/{song.id}.html"):
@@ -59,13 +63,22 @@ if __name__ == "__main__":
 
 
 		if text:
-			codes=re.findall("\"/watch\?v=([^\"]*)\\\\u0026", text)
+			codes=re.findall("\"/watch\?v=(\w+)\\\\u0026", text)
 			dcodes=[]
 			for code in codes:
 				if code not in dcodes:
 					dcodes.append(code)
-			for code in dcodes[:3]:
-				print(f"https://youtube.com/watch?v={code}")
 
-		print(url)
+			for url in song.urls:
+				session.delete(url)
+			
+			for n,code in enumerate(dcodes[:3]):
+				url=f"https://youtube.com/watch?v={code}"
+				song.urls.append(Url(song=song, url=url))
+				if n==0:
+					song.url=url
+				print(url)
+
+			session.commit()
+
 		

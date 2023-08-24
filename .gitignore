@@ -5,3 +5,4 @@ __pycache__
 *.tar.*
 ui_*.py
 *.csv
+data

@@ -62,6 +62,8 @@ class Url(Base):
 	song_id= Column(Integer, ForeignKey("songs.id"))
 	url = Column(String)
 
+Song.urls = relationship("Url", back_populates="song")
+Url.song = relationship("Song", uselist=False, back_populates="urls")
 #Artist.entries = relationship("Entry",  back_populates="artist")
 #Entry.artist = relationship("Artist", uselist=False,  back_populates="entries")
 
