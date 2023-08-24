@@ -8,14 +8,11 @@ ui :  ui_wordsearch.py
 
 get-office:
 	scp office:src/billboard/billboard.sqlite . ;\
+	rsync -r office:src/billboard/data/* data/ ;\ 
 	rsync -r office:src/billboard/*.csv . 
-
-get-tarball:
-	scp office:src/pdict/inet.tar.xz .
 
 put-office:
 	scp billboard.sqlite office:src/billboard/ ;\
 	rsync -r *.csv office:src/billboard
+	rsync -r data/* office:src/billboard/data ;\ 
 
-put-tarball:
-	scp inet.tar.xz office:src/pdict/
